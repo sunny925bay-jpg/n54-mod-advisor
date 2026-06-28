@@ -1,0 +1,26 @@
+id,chassis,year,turbo_setup,fuel,fueling_hw,tune,downpipe,charge_pipes,intercooler,intake,catback,bov_delete,oil_cooler,whp,wtq,dyno_type,source_url,notes
+1,e92,2009,stock,93,stock_hpfp,stock,0,0,0,0,0,0,0,278,312,mustang,,baseline stock 93
+2,e90,2008,stock,91,stock_hpfp,stock,0,0,0,0,0,0,0,265,298,mustang,,baseline stock 91
+3,e92,2010,stock,93,stock_hpfp,mhd_s1,0,0,0,0,0,0,0,308,348,mustang,,
+4,e90,2009,stock,93,stock_hpfp,jb4_s1,0,0,0,0,0,0,0,302,342,mustang,,
+5,e82,2011,stock,93,stock_hpfp,mhd_s1,0,0,0,1,0,0,0,314,354,mustang,,intake only no DP
+6,e92,2009,stock,93,stock_hpfp,mhd_s2,1,0,0,0,0,0,0,346,388,mustang,,catless DP
+7,e92,2010,stock,93,stock_hpfp,mhd_s2,1,1,0,0,0,0,0,355,396,mustang,,
+8,e90,2008,stock,93,stock_hpfp,mhd_s2,1,1,1,0,0,0,0,362,404,mustang,,FMIC added
+9,e92,2011,stock,93,stock_hpfp,mhd_s2plus,1,1,1,1,1,1,0,378,418,mustang,,full bolt-on 93
+10,e82,2012,stock,93,upg_hpfp,mhd_s2plus,1,1,1,1,1,1,0,382,422,mustang,,upg HPFP allows higher fuel trim
+11,e92,2010,stock,e30,upg_hpfp,mhd_s2,1,1,0,0,0,0,0,394,442,mustang,,
+12,e92,2010,stock,e30,upg_hpfp,mhd_s2plus,1,1,1,1,1,1,0,412,460,mustang,,full bolt-on E30
+13,e90,2009,stock,e50,upg_hpfp,mhd_s2,1,1,0,0,0,0,0,420,468,mustang,,
+14,e92,2011,stock,e85,upg_hpfp,mhd_custom,1,1,1,1,1,1,0,455,498,mustang,,
+15,e89,2011,stock,93,stock_hpfp,mhd_s1,0,1,0,1,0,0,0,316,356,mustang,,Z4 35i
+16,e92,2009,stock,93,stock_hpfp,jb4_s2,1,0,0,0,0,0,0,344,382,mustang,,
+17,e92,2010,stock,93,stock_hpfp,mhd_s2,1,0,1,0,0,0,0,360,400,mustang,,DP + FMIC no charge pipes
+18,e82,2013,stock,e30,upg_hpfp,mhd_custom,1,1,1,1,1,1,0,418,464,mustang,,
+19,e92,2012,stock,e85,port_inj,custom,1,1,1,1,1,1,1,462,505,mustang,,port inj E85 custom tune
+20,e90,2008,stock,93,stock_hpfp,stock,0,1,0,1,0,0,0,282,318,mustang,,intake+charge pipes no tune
+21,f10,2011,stock,93,stock_hpfp,mhd_s1,0,0,0,0,0,0,0,305,344,dynojet,,F10 535i N54; dynojet ~8% high
+22,f10,2012,stock,93,stock_hpfp,mhd_s2,1,1,1,1,0,0,0,358,398,dynojet,,
+23,e92,2010,stock,e50,upg_hpfp,mhd_s2plus,1,1,1,1,1,1,0,435,478,mustang,,
+24,e82,2011,stock,93,stock_hpfp,mhd_s2,1,1,1,1,0,1,0,368,408,mustang,,
+25,e90,2009,stock,91,stock_hpfp,jb4_s1,0,0,0,0,0,0,0,290,328,mustang,,
