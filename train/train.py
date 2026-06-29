@@ -160,10 +160,10 @@ def main():
     final_whp = lgb.LGBMRegressor(**lgb_params).fit(X, y_whp)
     final_wtq = lgb.LGBMRegressor(**lgb_params).fit(X, y_wtq)
 
-    with open(MODEL_DIR / "whp_model.pkl", "wb") as f:
-        pickle.dump(final_whp, f)
-    with open(MODEL_DIR / "wtq_model.pkl", "wb") as f:
-        pickle.dump(final_wtq, f)
+    # Save models in LightGBM native text format (version-agnostic, no pickle issues)
+    final_whp.booster_.save_model(str(MODEL_DIR / "whp_model.txt"))
+    final_wtq.booster_.save_model(str(MODEL_DIR / "wtq_model.txt"))
+    # Encoders are plain Python dicts — pickle is safe here
     with open(MODEL_DIR / "encoders.pkl", "wb") as f:
         pickle.dump(encoders, f)
 

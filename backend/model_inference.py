@@ -10,15 +10,15 @@ import pickle
 from pathlib import Path
 from typing import Optional
 
+import lightgbm as lgb
 import numpy as np
 
 MODEL_DIR = Path(__file__).parent.parent / "model"
 DATA_DIR  = Path(__file__).parent.parent / "data"
 
-with open(MODEL_DIR / "whp_model.pkl", "rb") as f:
-    _whp_model = pickle.load(f)
-with open(MODEL_DIR / "wtq_model.pkl", "rb") as f:
-    _wtq_model = pickle.load(f)
+# Native LightGBM format — version-agnostic, no pickle compatibility issues
+_whp_model = lgb.Booster(model_file=str(MODEL_DIR / "whp_model.txt"))
+_wtq_model = lgb.Booster(model_file=str(MODEL_DIR / "wtq_model.txt"))
 with open(MODEL_DIR / "encoders.pkl", "rb") as f:
     _enc = pickle.load(f)
 with open(DATA_DIR / "prices.json", encoding="utf-8") as f:
