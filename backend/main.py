@@ -3,9 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
-import baseline
+# Use trained model if artifacts exist; fall back to avg-gain baseline otherwise.
+try:
+    import model_inference as recommender
+    _MODEL_STATUS = "lgbm"
+except FileNotFoundError:
+    import baseline as recommender
+    _MODEL_STATUS = "baseline-lookup"
 
-app = FastAPI(title="N54 Mod Advisor API", version="0.2.0")
+_BINARY_MODS = [
+    "downpipe", "charge_pipes", "intercooler",
+    "intake", "catback", "bov_delete", "oil_cooler",
+]
+
+app = FastAPI(title="N54 Mod Advisor API", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +36,15 @@ class RecommendRequest(BaseModel):
     goal: str         # "power" | "value" | "reliability"
 
 
+class PredictRequest(BaseModel):
+    chassis: str
+    year: int
+    fuel: str
+    fueling_hw: str
+    tune: str
+    mods: List[str]
+
+
 class ModRecommendation(BaseModel):
     mod: str
     predicted_whp_gain: float
@@ -37,36 +57,61 @@ class ModRecommendation(BaseModel):
 class RecommendResponse(BaseModel):
     current_whp: float
     current_wtq: float
+    model: str
     recommendations: List[ModRecommendation]
+
+
+class PredictResponse(BaseModel):
+    whp: float
+    wtq: float
+    model: str
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": "baseline-lookup"}
+    return {"status": "ok", "model": _MODEL_STATUS}
+
+
+@app.post("/predict", response_model=PredictResponse)
+def predict_build(req: PredictRequest):
+    """Return predicted whp/wtq for a full build config."""
+    config = {
+        "chassis": req.chassis,
+        "year": req.year,
+        "turbo_setup": "stock",
+        "fuel": req.fuel,
+        "fueling_hw": req.fueling_hw,
+        "tune": req.tune,
+        "dyno_type": "mustang",
+        **{m: (1 if m in req.mods else 0) for m in _BINARY_MODS},
+    }
+    whp, wtq = recommender.predict(config)
+    return PredictResponse(whp=whp, wtq=wtq, model=_MODEL_STATUS)
 
 
 @app.post("/recommend", response_model=RecommendResponse)
 def recommend(req: RecommendRequest):
-    current_whp, current_wtq = baseline.estimate_current(req.tune, req.fuel)
-    recs = baseline.get_recommendations(
+    """Return current predicted power + ranked mod recommendations."""
+    current_whp, current_wtq = recommender.estimate_current(
+        tune=req.tune,
+        fuel=req.fuel,
+        chassis=req.chassis,
+        year=req.year,
+        fueling_hw=req.fueling_hw,
+        **{m: (1 if m in req.mods else 0) for m in _BINARY_MODS},
+    )
+    recs = recommender.get_recommendations(
         fuel=req.fuel,
         fueling_hw=req.fueling_hw,
         tune=req.tune,
         installed_mods=set(req.mods),
         goal=req.goal,
+        chassis=req.chassis,
+        year=req.year,
     )
     return RecommendResponse(
         current_whp=current_whp,
         current_wtq=current_wtq,
-        recommendations=[
-            ModRecommendation(
-                mod=r["mod"],
-                predicted_whp_gain=r["predicted_whp_gain"],
-                predicted_wtq_gain=r["predicted_wtq_gain"],
-                cost_usd=r["cost_usd"],
-                hp_per_dollar=r["hp_per_dollar"],
-                reasoning=r["reasoning"],
-            )
-            for r in recs
-        ],
+        model=_MODEL_STATUS,
+        recommendations=[ModRecommendation(**r) for r in recs],
     )
