@@ -1,0 +1,20 @@
+{
+  "downpipe":          { "cost_usd": 380, "label": "Aftermarket downpipe (catless)" },
+  "charge_pipes":      { "cost_usd": 120, "label": "Upgraded charge pipes" },
+  "intercooler":       { "cost_usd": 450, "label": "Front-mount intercooler (FMIC)" },
+  "intake":            { "cost_usd": 200, "label": "Cold air intake" },
+  "catback":           { "cost_usd": 550, "label": "Cat-back exhaust" },
+  "bov_delete":        { "cost_usd": 75,  "label": "BOV/BPV delete" },
+  "oil_cooler":        { "cost_usd": 340, "label": "Oil cooler kit" },
+  "tune_jb4_s1":       { "cost_usd": 525, "label": "JB4 Stage 1 (piggyback unit + tune)" },
+  "tune_jb4_s2":       { "cost_usd": 525, "label": "JB4 Stage 2 (piggyback unit + tune)" },
+  "tune_mhd_s1":       { "cost_usd": 50,  "label": "MHD Stage 1 flash" },
+  "tune_mhd_s2":       { "cost_usd": 150, "label": "MHD Stage 2 flash" },
+  "tune_mhd_s2plus":   { "cost_usd": 150, "label": "MHD Stage 2+ flash" },
+  "tune_mhd_custom":   { "cost_usd": 600, "label": "MHD custom / pro tune" },
+  "tune_cobb":         { "cost_usd": 700, "label": "COBB Accessport" },
+  "tune_custom":       { "cost_usd": 800, "label": "Custom standalone tune" },
+  "fueling_upg_hpfp":  { "cost_usd": 200, "label": "Upgraded HPFP" },
+  "fueling_meth":      { "cost_usd": 500, "label": "Water-methanol injection kit" },
+  "fueling_port_inj":  { "cost_usd": 900, "label": "Port injection kit" }
+}
