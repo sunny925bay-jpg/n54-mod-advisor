@@ -1,0 +1,10 @@
+{
+  "n_rows": 25,
+  "cv_folds": 5,
+  "lgbm_whp_mae_mean": 11.2,
+  "lgbm_whp_mae_std": 3.52,
+  "lgbm_wtq_mae_mean": 10.61,
+  "lgbm_wtq_mae_std": 3.68,
+  "baseline_whp_mae": 46.8,
+  "baseline_wtq_mae": 49.14
+}
