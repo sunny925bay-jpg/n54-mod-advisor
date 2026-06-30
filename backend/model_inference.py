@@ -160,6 +160,7 @@ def get_recommendations(
     goal: str,
     chassis: str = "e92",
     year: int = 2010,
+    target_hp: Optional[int] = None,
 ) -> list[dict]:
     base = {
         "chassis": chassis, "year": year,
@@ -187,6 +188,7 @@ def get_recommendations(
             "reasoning": REASONING.get(reasoning_key, ""),
             "explanation": explanation,
             "parts": parts,
+            "risk_score": 0.0,
         })
 
     for mod in BINARY_MODS:
@@ -212,8 +214,14 @@ def get_recommendations(
              _prices.get(f"fueling_{next_fueling}", {}).get("cost_usd", 300),
              "fueling_upgrade", "fueling_hw")
 
-    candidates.sort(
-        key=lambda x: x["hp_per_dollar" if goal == "value" else "predicted_whp_gain"],
-        reverse=True,
-    )
+    if goal in ("best_value", "value"):
+        candidates.sort(key=lambda x: x["hp_per_dollar"], reverse=True)
+    elif goal == "reliability":
+        # TODO Phase 3 part 3: subtract risk_score penalty before sorting
+        candidates.sort(key=lambda x: x["predicted_whp_gain"] - x["risk_score"] * 10, reverse=True)
+    elif goal == "target_hp":
+        # TODO Phase 3 part 3: beam search — find cheapest path to target_hp
+        candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
+    else:  # "max_power" or legacy "power"
+        candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
     return candidates

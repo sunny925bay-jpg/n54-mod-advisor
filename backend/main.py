@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 # Use trained model if artifacts exist; fall back to avg-gain baseline otherwise.
 try:
@@ -33,7 +33,8 @@ class RecommendRequest(BaseModel):
     fueling_hw: str   # "stock_hpfp" | "upg_hpfp" | "port_inj" | "meth" | "port_inj_meth"
     tune: str         # "stock" | "jb4_s1" | "mhd_s1" | "mhd_s2" | ... see data/schema.md
     mods: List[str]   # ["downpipe", "intercooler", "charge_pipes", ...]
-    goal: str         # "power" | "value" | "reliability"
+    goal: str         # "max_power" | "best_value" | "reliability" | "target_hp"
+    target_hp: Optional[int] = None
 
 
 class PredictRequest(BaseModel):
@@ -63,6 +64,7 @@ class ModRecommendation(BaseModel):
     reasoning: str
     explanation: str = ""
     parts: List[PartOption] = []
+    risk_score: float = 0.0
 
 
 class RecommendResponse(BaseModel):
@@ -119,6 +121,7 @@ def recommend(req: RecommendRequest):
         goal=req.goal,
         chassis=req.chassis,
         year=req.year,
+        target_hp=req.target_hp,
     )
     return RecommendResponse(
         current_whp=current_whp,

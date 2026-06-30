@@ -123,6 +123,7 @@ def get_recommendations(
     goal: str,
     chassis: str = "e92",
     year: int = 2010,
+    target_hp: Optional[int] = None,
 ) -> list[dict]:
     candidates = []
 
@@ -138,6 +139,9 @@ def get_recommendations(
             "cost_usd": cost,
             "hp_per_dollar": round(whp_gain / cost, 4) if cost > 0 else 0.0,
             "reasoning": EXPLANATIONS.get(mod, ""),
+            "explanation": "",
+            "parts": [],
+            "risk_score": 0.0,
         })
 
     next_tune = _next(TUNE_ORDER, tune)
@@ -153,6 +157,9 @@ def get_recommendations(
                 "cost_usd": cost,
                 "hp_per_dollar": round(whp_gain / cost, 4) if cost > 0 else 0.0,
                 "reasoning": EXPLANATIONS["tune_upgrade"],
+                "explanation": "",
+                "parts": [],
+                "risk_score": 0.0,
             })
 
     next_fuel = _next(FUEL_ORDER, fuel)
@@ -167,6 +174,9 @@ def get_recommendations(
                 "cost_usd": 0,
                 "hp_per_dollar": 999.0,
                 "reasoning": EXPLANATIONS["fuel_upgrade"],
+                "explanation": "",
+                "parts": [],
+                "risk_score": 0.0,
             })
 
     next_fueling = _next(FUELING_ORDER, fueling_hw)
@@ -182,7 +192,17 @@ def get_recommendations(
                 "cost_usd": cost,
                 "hp_per_dollar": round(whp_gain / cost, 4) if cost > 0 else 0.0,
                 "reasoning": EXPLANATIONS["fueling_upgrade"],
+                "explanation": "",
+                "parts": [],
+                "risk_score": 0.0,
             })
 
-    candidates.sort(key=lambda x: x["hp_per_dollar" if goal == "value" else "predicted_whp_gain"], reverse=True)
+    if goal in ("best_value", "value"):
+        candidates.sort(key=lambda x: x["hp_per_dollar"], reverse=True)
+    elif goal == "reliability":
+        candidates.sort(key=lambda x: x["predicted_whp_gain"] - x["risk_score"] * 10, reverse=True)
+    elif goal == "target_hp":
+        candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
+    else:  # "max_power" or legacy "power"
+        candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
     return candidates
