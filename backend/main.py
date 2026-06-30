@@ -46,6 +46,12 @@ class PredictRequest(BaseModel):
     mods: List[str]
 
 
+class RiskFlag(BaseModel):
+    id: str
+    severity: str  # "info" | "caution" | "warning"
+    message: str
+
+
 class PartOption(BaseModel):
     brand: str
     name: str
@@ -64,6 +70,7 @@ class ModRecommendation(BaseModel):
     reasoning: str
     explanation: str = ""
     parts: List[PartOption] = []
+    risk_flags: List[RiskFlag] = []
     risk_score: float = 0.0
 
 

@@ -10,6 +10,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
+from risk_engine import evaluate_rules, compute_risk_score
+
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 TUNE_ORDER    = ["stock", "jb4_s1", "mhd_s1", "jb4_s2", "mhd_s2",
@@ -126,12 +128,16 @@ def get_recommendations(
     target_hp: Optional[int] = None,
 ) -> list[dict]:
     candidates = []
+    base_whp, _ = estimate_current(tune=tune, fuel=fuel)
+    mod_state = {m: (1 if m in installed_mods else 0) for m in BINARY_MODS}
 
     for mod in BINARY_MODS:
         if mod in installed_mods or mod not in _binary_gains:
             continue
         whp_gain, wtq_gain = _binary_gains[mod]
         cost = _prices.get(mod, {}).get("cost_usd", 0)
+        config_with = {"fuel": fuel, "fueling_hw": fueling_hw, "tune": tune, **mod_state, mod: 1}
+        flags = evaluate_rules(config_with, base_whp + whp_gain)
         candidates.append({
             "mod": mod,
             "predicted_whp_gain": whp_gain,
@@ -141,7 +147,8 @@ def get_recommendations(
             "reasoning": EXPLANATIONS.get(mod, ""),
             "explanation": "",
             "parts": [],
-            "risk_score": 0.0,
+            "risk_flags": flags,
+            "risk_score": compute_risk_score(flags),
         })
 
     next_tune = _next(TUNE_ORDER, tune)
@@ -150,6 +157,8 @@ def get_recommendations(
         wtq_gain = round(_tune_avgs[next_tune][1] - _tune_avgs[tune][1], 1)
         if whp_gain > 0:
             cost = _prices.get(f"tune_{next_tune}", {}).get("cost_usd", 150)
+            config_with = {"fuel": fuel, "fueling_hw": fueling_hw, "tune": next_tune, **mod_state}
+            flags = evaluate_rules(config_with, base_whp + whp_gain)
             candidates.append({
                 "mod": f"tune → {next_tune}",
                 "predicted_whp_gain": whp_gain,
@@ -159,7 +168,8 @@ def get_recommendations(
                 "reasoning": EXPLANATIONS["tune_upgrade"],
                 "explanation": "",
                 "parts": [],
-                "risk_score": 0.0,
+                "risk_flags": flags,
+                "risk_score": compute_risk_score(flags),
             })
 
     next_fuel = _next(FUEL_ORDER, fuel)
@@ -167,6 +177,8 @@ def get_recommendations(
         whp_gain = round(_fuel_avgs[next_fuel][0] - _fuel_avgs[fuel][0], 1)
         wtq_gain = round(_fuel_avgs[next_fuel][1] - _fuel_avgs[fuel][1], 1)
         if whp_gain > 0:
+            config_with = {"fuel": next_fuel, "fueling_hw": fueling_hw, "tune": tune, **mod_state}
+            flags = evaluate_rules(config_with, base_whp + whp_gain)
             candidates.append({
                 "mod": f"fuel → {next_fuel}",
                 "predicted_whp_gain": whp_gain,
@@ -176,7 +188,8 @@ def get_recommendations(
                 "reasoning": EXPLANATIONS["fuel_upgrade"],
                 "explanation": "",
                 "parts": [],
-                "risk_score": 0.0,
+                "risk_flags": flags,
+                "risk_score": compute_risk_score(flags),
             })
 
     next_fueling = _next(FUELING_ORDER, fueling_hw)
@@ -185,6 +198,8 @@ def get_recommendations(
         wtq_gain = round(_fueling_avgs[next_fueling][1] - _fueling_avgs[fueling_hw][1], 1)
         if whp_gain > 0:
             cost = _prices.get(f"fueling_{next_fueling}", {}).get("cost_usd", 300)
+            config_with = {"fuel": fuel, "fueling_hw": next_fueling, "tune": tune, **mod_state}
+            flags = evaluate_rules(config_with, base_whp + whp_gain)
             candidates.append({
                 "mod": f"fueling → {next_fueling}",
                 "predicted_whp_gain": whp_gain,
@@ -194,7 +209,8 @@ def get_recommendations(
                 "reasoning": EXPLANATIONS["fueling_upgrade"],
                 "explanation": "",
                 "parts": [],
-                "risk_score": 0.0,
+                "risk_flags": flags,
+                "risk_score": compute_risk_score(flags),
             })
 
     if goal in ("best_value", "value"):

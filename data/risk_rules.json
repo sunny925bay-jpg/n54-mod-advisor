@@ -1,0 +1,75 @@
+[
+  {
+    "id": "e50_stock_hpfp",
+    "severity": "warning",
+    "message": "E50+ on stock HPFP risks fueling faults and lean conditions under load. Upgrade HPFP internals first.",
+    "when": {
+      "fuel_gte": "e50",
+      "fueling_hw_in": ["stock_hpfp"]
+    }
+  },
+  {
+    "id": "e30_stock_hpfp",
+    "severity": "caution",
+    "message": "E30 on stock HPFP is borderline at higher boost; HPFP internals upgrade is recommended.",
+    "when": {
+      "fuel_in": ["e30"],
+      "fueling_hw_in": ["stock_hpfp"]
+    }
+  },
+  {
+    "id": "s2_tune_no_downpipe",
+    "severity": "warning",
+    "message": "Stage 2 tune targets boost levels that require a downpipe to avoid excessive exhaust backpressure.",
+    "when": {
+      "tune_in": ["mhd_s2", "mhd_s2plus", "jb4_s2"],
+      "mod_absent": "downpipe"
+    }
+  },
+  {
+    "id": "e85_no_port_inj",
+    "severity": "warning",
+    "message": "Full E85 exceeds HPFP flow capacity at boost; port injection is required for safe fueling.",
+    "when": {
+      "fuel_in": ["e85"],
+      "fueling_hw_not_in": ["port_inj", "port_inj_meth"]
+    }
+  },
+  {
+    "id": "high_tune_stock_fueling_low_fuel",
+    "severity": "caution",
+    "message": "High-stage tune on stock HPFP with 93 or lower limits safe boost ceiling and risks knock.",
+    "when": {
+      "tune_gte": "mhd_s2plus",
+      "fueling_hw_in": ["stock_hpfp"],
+      "fuel_in": ["91", "93"]
+    }
+  },
+  {
+    "id": "ethanol_stock_tune",
+    "severity": "warning",
+    "message": "Running ethanol blends without an ethanol-aware tune risks lean A/F ratios and detonation under boost.",
+    "when": {
+      "fuel_gte": "e30",
+      "tune_in": ["stock"]
+    }
+  },
+  {
+    "id": "high_power_no_charge_pipes",
+    "severity": "caution",
+    "message": "Above ~350 whp the OEM plastic charge pipes are a known failure point; aluminum upgrade recommended.",
+    "when": {
+      "predicted_whp_gte": 350,
+      "mod_absent": "charge_pipes"
+    }
+  },
+  {
+    "id": "meth_no_tune",
+    "severity": "caution",
+    "message": "Methanol injection without a supporting tune that accounts for it may cause unpredictable fueling.",
+    "when": {
+      "fueling_hw_in": ["meth"],
+      "tune_in": ["stock", "jb4_s1", "mhd_s1"]
+    }
+  }
+]

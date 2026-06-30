@@ -13,6 +13,7 @@ from typing import Optional
 import lightgbm as lgb
 import numpy as np
 import shap
+from risk_engine import evaluate_rules, compute_risk_score
 
 MODEL_DIR = Path(__file__).parent.parent / "model"
 DATA_DIR  = Path(__file__).parent.parent / "data"
@@ -179,6 +180,7 @@ def get_recommendations(
             return
         explanation = _explain_gain(base, config_with, mod_feature)
         parts = _lookup_parts(mod_feature, mod_label)
+        flags = evaluate_rules(config_with, whp)
         candidates.append({
             "mod": mod_label,
             "predicted_whp_gain": gain_whp,
@@ -188,7 +190,8 @@ def get_recommendations(
             "reasoning": REASONING.get(reasoning_key, ""),
             "explanation": explanation,
             "parts": parts,
-            "risk_score": 0.0,
+            "risk_flags": flags,
+            "risk_score": compute_risk_score(flags),
         })
 
     for mod in BINARY_MODS:
@@ -217,10 +220,8 @@ def get_recommendations(
     if goal in ("best_value", "value"):
         candidates.sort(key=lambda x: x["hp_per_dollar"], reverse=True)
     elif goal == "reliability":
-        # TODO Phase 3 part 3: subtract risk_score penalty before sorting
         candidates.sort(key=lambda x: x["predicted_whp_gain"] - x["risk_score"] * 10, reverse=True)
     elif goal == "target_hp":
-        # TODO Phase 3 part 3: beam search — find cheapest path to target_hp
         candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
     else:  # "max_power" or legacy "power"
         candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)

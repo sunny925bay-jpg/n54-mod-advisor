@@ -3,6 +3,12 @@ import './App.css'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
+interface RiskFlag {
+  id: string
+  severity: 'info' | 'caution' | 'warning'
+  message: string
+}
+
 interface PartOption {
   brand: string
   name: string
@@ -21,6 +27,7 @@ interface Recommendation {
   reasoning: string
   explanation: string
   parts: PartOption[]
+  risk_flags: RiskFlag[]
   risk_score: number
 }
 
@@ -110,6 +117,18 @@ function RecCard({ rec }: { rec: Recommendation }) {
         <div className="rec-body">
           {rec.reasoning && <p className="rec-reasoning">{rec.reasoning}</p>}
           {rec.explanation && <p className="rec-explanation">{rec.explanation}</p>}
+          {rec.risk_flags.length > 0 && (
+            <div className="risk-flags">
+              {rec.risk_flags.map((f) => (
+                <div key={f.id} className={`risk-flag risk-${f.severity}`}>
+                  <span className="risk-icon">
+                    {f.severity === 'warning' ? '⚠' : f.severity === 'caution' ? '◆' : 'ℹ'}
+                  </span>
+                  {f.message}
+                </div>
+              ))}
+            </div>
+          )}
           {rec.parts.length > 0 && (
             <div className="rec-parts">
               <h4>Buy options</h4>
