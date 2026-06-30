@@ -24,6 +24,8 @@ with open(MODEL_DIR / "encoders.pkl", "rb") as f:
     _enc = pickle.load(f)
 with open(DATA_DIR / "prices.json", encoding="utf-8") as f:
     _prices: dict = json.load(f)
+with open(DATA_DIR / "parts.json", encoding="utf-8") as f:
+    _parts_catalog: dict = json.load(f)
 
 # Cached at startup — TreeExplainer is exact and fast for tree models
 _explainer = shap.TreeExplainer(_whp_model)
@@ -85,6 +87,23 @@ def _encode(config: dict) -> np.ndarray:
 def predict(config: dict) -> tuple[float, float]:
     x = _encode(config)
     return round(float(_whp_model.predict(x)[0]), 1), round(float(_wtq_model.predict(x)[0]), 1)
+
+
+def _lookup_parts(mod_feature: str, mod_label: str) -> list[dict]:
+    """Return parts from the catalog matching the mod and target level."""
+    catalog = _parts_catalog.get(mod_feature, [])
+    if not catalog:
+        return []
+
+    if mod_feature == "tune":
+        target = mod_label.split("→")[-1].strip()
+        return [p for p in catalog if target in p.get("tune_levels", [])]
+
+    if mod_feature == "fueling_hw":
+        target = mod_label.split("→")[-1].strip()
+        return [p for p in catalog if p.get("fueling_level") == target]
+
+    return catalog  # binary mods: return all options in category
 
 
 def _explain_gain(base_config: dict, mod_config: dict, mod_feature: str) -> str:
@@ -158,6 +177,7 @@ def get_recommendations(
         if gain_whp <= 0:
             return
         explanation = _explain_gain(base, config_with, mod_feature)
+        parts = _lookup_parts(mod_feature, mod_label)
         candidates.append({
             "mod": mod_label,
             "predicted_whp_gain": gain_whp,
@@ -166,6 +186,7 @@ def get_recommendations(
             "hp_per_dollar": round(gain_whp / cost, 4) if cost > 0 else 999.0,
             "reasoning": REASONING.get(reasoning_key, ""),
             "explanation": explanation,
+            "parts": parts,
         })
 
     for mod in BINARY_MODS:

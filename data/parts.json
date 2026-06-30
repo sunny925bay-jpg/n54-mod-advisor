@@ -1,0 +1,247 @@
+{
+  "tune": [
+    {
+      "id": "jb4-n54",
+      "brand": "Burger Motorsports",
+      "name": "JB4 Piggyback Tune",
+      "tune_levels": ["jb4_s1", "jb4_s2"],
+      "price_usd": 525,
+      "vendor_url": "https://www.burgertuning.com/products/bmw-n54-jb4-performance-tuner",
+      "pros": ["Plug-and-play, no flashing", "Built-in data logging", "E85 compatible", "Reversible instantly"],
+      "cons": ["Piggyback — less precise than flash", "Bluetooth adapter sold separately", "Two ECU units to manage"]
+    },
+    {
+      "id": "mhd-n54",
+      "brand": "MHD",
+      "name": "MHD Flasher N54 (Stage 1 / 2 / 2+)",
+      "tune_levels": ["mhd_s1", "mhd_s2", "mhd_s2plus"],
+      "price_usd": 150,
+      "vendor_url": "https://mhd-tuning.com",
+      "pros": ["Flash-based, cleanest install", "Stage 1, 2, 2+ all included in one license", "Large N54 community", "OBD datalogging"],
+      "cons": ["Requires Android phone to flash", "Stage 2 requires downpipe", "Custom/pro tune is separate cost"]
+    },
+    {
+      "id": "cobb-ap-n54",
+      "brand": "COBB",
+      "name": "Accessport V3 for N54",
+      "tune_levels": ["cobb"],
+      "price_usd": 695,
+      "vendor_url": "https://www.cobbtuning.com/products/accessport-bmw",
+      "pros": ["Standalone handheld device", "No phone required", "Off-the-shelf maps available", "Wide custom tuner support"],
+      "cons": ["Higher upfront cost", "Smaller N54-specific community vs MHD", "Custom tune adds cost"]
+    },
+    {
+      "id": "mhd-custom-n54",
+      "brand": "MHD",
+      "name": "MHD Pro / Custom Tune",
+      "tune_levels": ["mhd_custom"],
+      "price_usd": 600,
+      "vendor_url": "https://mhd-tuning.com",
+      "pros": ["Fully optimized for your exact build", "Highest power ceiling", "Tuner can target specific ethanol %"],
+      "cons": ["Requires MHD base license first", "Remote tune takes multiple revision sessions", "Cost varies by tuner"]
+    }
+  ],
+
+  "downpipe": [
+    {
+      "id": "aa-dp-catless",
+      "brand": "Active Autowerke",
+      "name": "N54 Catless Downpipe",
+      "price_usd": 380,
+      "vendor_url": "https://activeautowerke.com/products/bmw-135i-335i-n54-downpipe",
+      "pros": ["Maximum exhaust flow", "Direct OEM replacement fit", "Made in USA", "Proven on thousands of N54s"],
+      "cons": ["Not street legal in CARB / emissions-tested states", "Cold-start smell until cats warm upstream"]
+    },
+    {
+      "id": "berk-dp-catless",
+      "brand": "Berk Technology",
+      "name": "N54 Catless Downpipe",
+      "price_usd": 350,
+      "vendor_url": "https://www.berktech.com",
+      "pros": ["Slightly lower cost than AA", "Quality stainless construction", "Good fit reports"],
+      "cons": ["Not emissions legal", "Less brand recognition than AA in N54 community"]
+    },
+    {
+      "id": "aa-dp-catted",
+      "brand": "Active Autowerke",
+      "name": "N54 Catted Downpipe (200-cell)",
+      "price_usd": 450,
+      "vendor_url": "https://activeautowerke.com/products/bmw-135i-335i-n54-downpipe",
+      "pros": ["Emissions-friendly option", "Still meaningful flow improvement over stock", "Passes visual inspection in most states"],
+      "cons": ["~10-15 whp less than catless", "Higher cost than catless"]
+    }
+  ],
+
+  "charge_pipes": [
+    {
+      "id": "bms-cp-n54",
+      "brand": "Burger Motorsports",
+      "name": "N54 Charge Pipe Upgrade Kit",
+      "price_usd": 120,
+      "vendor_url": "https://www.burgertuning.com/products/n54-charge-pipe",
+      "pros": ["Most popular N54 charge pipe", "Eliminates OEM plastic failure points", "Easy install", "Silicone couplers included"],
+      "cons": ["Aluminum — check fitment on some builds", "No meaningful power gain alone"]
+    },
+    {
+      "id": "mishimoto-cp-n54",
+      "brand": "Mishimoto",
+      "name": "N54 Performance Charge Pipe Kit",
+      "price_usd": 155,
+      "vendor_url": "https://mishimoto.com/products/bmw-n54-charge-pipe-kit",
+      "pros": ["Polished aluminum finish", "Lifetime warranty", "Well-regarded brand"],
+      "cons": ["More expensive than BMS", "Same functional outcome as cheaper options"]
+    },
+    {
+      "id": "aa-cp-n54",
+      "brand": "Active Autowerke",
+      "name": "N54 Charge Pipe Kit",
+      "price_usd": 160,
+      "vendor_url": "https://activeautowerke.com",
+      "pros": ["Matches AA downpipe aesthetics", "Quality fitment", "Silicone couplers"],
+      "cons": ["Premium priced for what is a prevention mod"]
+    }
+  ],
+
+  "intercooler": [
+    {
+      "id": "aa-fmic-n54",
+      "brand": "Active Autowerke",
+      "name": "N54 Front Mount Intercooler Kit",
+      "price_usd": 450,
+      "vendor_url": "https://activeautowerke.com/products/bmw-n54-front-mount-intercooler-kit",
+      "pros": ["Large core, proven thermal performance", "Direct bolt-on", "Includes all piping and couplers", "Most popular N54 FMIC"],
+      "cons": ["Some hood clearance sensitivity", "No DRL / fog relocation included on some fitments"]
+    },
+    {
+      "id": "mishimoto-fmic-n54",
+      "brand": "Mishimoto",
+      "name": "N54 Performance Front Mount Intercooler",
+      "price_usd": 395,
+      "vendor_url": "https://mishimoto.com/products/bmw-n54-intercooler",
+      "pros": ["Lifetime warranty", "Slightly lower cost than AA", "Good thermal data published"],
+      "cons": ["Smaller core than some competitors at this price", "Piping kit sold separately on some SKUs"]
+    },
+    {
+      "id": "precision-fmic-n54",
+      "brand": "Precision Raceworks",
+      "name": "N54 FMIC Kit",
+      "price_usd": 550,
+      "vendor_url": "https://precisionraceworks.com",
+      "pros": ["Large bar-and-plate core", "Favored in high-power builds", "Excellent heat soak resistance"],
+      "cons": ["Higher cost", "May require fog light modification"]
+    }
+  ],
+
+  "intake": [
+    {
+      "id": "bms-intake-n54",
+      "brand": "Burger Motorsports",
+      "name": "N54 Burger Intake",
+      "price_usd": 199,
+      "vendor_url": "https://www.burgertuning.com/products/n54-intake",
+      "pros": ["Most popular N54 intake", "Easy drop-in install", "Reusable filter", "Large JB4 community data"],
+      "cons": ["Marginal gains without supporting tune", "Heat soak possible in confined engine bay"]
+    },
+    {
+      "id": "afe-intake-n54",
+      "brand": "aFe Power",
+      "name": "Momentum GT Cold Air Intake N54",
+      "price_usd": 280,
+      "vendor_url": "https://www.afepower.com",
+      "pros": ["True cold air routing", "Large cone filter", "Proven on multiple platforms"],
+      "cons": ["More expensive", "Larger install footprint", "Check clearance on some chassis"]
+    },
+    {
+      "id": "aa-intake-n54",
+      "brand": "Active Autowerke",
+      "name": "N54 High Flow Intake",
+      "price_usd": 180,
+      "vendor_url": "https://activeautowerke.com",
+      "pros": ["Budget-friendly", "Pairs well with AA downpipe ecosystem"],
+      "cons": ["Less airflow data vs BMS", "Smaller community for feedback"]
+    }
+  ],
+
+  "catback": [
+    {
+      "id": "meisterschaft-gtc-n54",
+      "brand": "Meisterschaft",
+      "name": "GTC Cat-back Exhaust N54",
+      "price_usd": 1200,
+      "vendor_url": "https://meisterschaft.com",
+      "pros": ["Premium sound quality", "Excellent build quality", "Valved options available", "Widely regarded as the best N54 catback"],
+      "cons": ["Expensive", "More of a sound/aesthetic mod than power mod on stock turbos"]
+    },
+    {
+      "id": "aa-catback-n54",
+      "brand": "Active Autowerke",
+      "name": "N54 Cat-back Exhaust",
+      "price_usd": 750,
+      "vendor_url": "https://activeautowerke.com",
+      "pros": ["More affordable than Meisterschaft", "Good tone", "Pairs with AA ecosystem"],
+      "cons": ["Less refined sound than Meisterschaft at full throttle", "No valve option"]
+    },
+    {
+      "id": "remus-catback-n54",
+      "brand": "Remus",
+      "name": "N54 Sport Cat-back",
+      "price_usd": 850,
+      "vendor_url": "https://www.remus.eu",
+      "pros": ["European OEM-quality fit", "Subtle but sporty tone", "Good for daily drivers who want refinement"],
+      "cons": ["Pricier than domestic alternatives", "Quieter than some prefer"]
+    }
+  ],
+
+  "fueling_hw": [
+    {
+      "id": "bms-hpfp-n54",
+      "brand": "Burger Motorsports",
+      "name": "N54 HPFP Internals Upgrade",
+      "fueling_level": "upg_hpfp",
+      "price_usd": 200,
+      "vendor_url": "https://www.burgertuning.com/products/n54-hpfp-internals-upgrade",
+      "pros": ["Required for E30+ fuel blends", "Drops into stock HPFP housing", "Proven on thousands of N54s", "Resolves fueling fault codes on ethanol"],
+      "cons": ["Labor required for install", "Does not support very high port injection demands alone"]
+    },
+    {
+      "id": "fuelit-hpfp-n54",
+      "brand": "Fuel-It",
+      "name": "Stage 2 HPFP Upgrade N54",
+      "fueling_level": "upg_hpfp",
+      "price_usd": 215,
+      "vendor_url": "https://fuel-itperformance.com",
+      "pros": ["Higher flow than BMS at same price point", "Good for E50+ builds", "Strong community reputation"],
+      "cons": ["Slightly pricier than BMS", "Same labor requirement"]
+    },
+    {
+      "id": "bms-port-injection-n54",
+      "brand": "Burger Motorsports",
+      "name": "N54 Port Injection Kit",
+      "fueling_level": "port_inj",
+      "price_usd": 900,
+      "vendor_url": "https://www.burgertuning.com/products/n54-port-injection",
+      "pros": ["Enables E85 on stock-turbo builds", "Eliminates HPFP fueling ceiling", "Well-supported by MHD and JB4"],
+      "cons": ["Significant installation complexity", "Requires tune support (MHD pro or JB4 BEF)", "High upfront cost"]
+    },
+    {
+      "id": "fuelit-port-injection-n54",
+      "brand": "Fuel-It",
+      "name": "Port Injection Kit N54",
+      "fueling_level": "port_inj",
+      "price_usd": 875,
+      "vendor_url": "https://fuel-itperformance.com",
+      "pros": ["Competitive pricing", "High quality injectors", "Good MHD compatibility"],
+      "cons": ["Complex install", "Requires supporting tune"]
+    },
+    {
+      "id": "aquamist-meth-n54",
+      "brand": "Aquamist",
+      "name": "HFS-4 Methanol Injection Kit",
+      "fueling_level": "meth",
+      "price_usd": 500,
+      "vendor_url": "https://www.aquamist.co.uk",
+      "pros": ["Acts as octane booster + charge cooler", "Lower cost than port injection", "Meaningful knock reduction"],
+      "cons": ["Requires methanol supply", "Tank/pump maintenance", "Not as clean as port injection at high loads"]
+    }
+  ]
+}
