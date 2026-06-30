@@ -1,5 +1,5 @@
 """
-LightGBM inference layer.
+LightGBM inference layer with SHAP-based explanations.
 Loads trained artifacts from model/ at startup.
 Exposes predict() / estimate_current() / get_recommendations()
 with the same signatures as baseline.py so main.py needs no logic changes.
@@ -12,6 +12,7 @@ from typing import Optional
 
 import lightgbm as lgb
 import numpy as np
+import shap
 
 MODEL_DIR = Path(__file__).parent.parent / "model"
 DATA_DIR  = Path(__file__).parent.parent / "data"
@@ -24,12 +25,33 @@ with open(MODEL_DIR / "encoders.pkl", "rb") as f:
 with open(DATA_DIR / "prices.json", encoding="utf-8") as f:
     _prices: dict = json.load(f)
 
+# Cached at startup — TreeExplainer is exact and fast for tree models
+_explainer = shap.TreeExplainer(_whp_model)
+
 BINARY_MODS   = _enc["binary_mods"]
 FUEL_ORDER    = _enc["fuel_order"]
 FUELING_ORDER = _enc["fueling_order"]
 TUNE_ORDER    = _enc["tune_order"]
+FEATURE_NAMES = _enc["feature_names"]
 
-EXPLANATIONS = {
+FEATURE_LABELS = {
+    "chassis":    "chassis type",
+    "year":       "model year",
+    "turbo_setup":"turbo setup",
+    "fuel":       "fuel grade",
+    "fueling_hw": "fueling hardware",
+    "tune":       "tune level",
+    "downpipe":   "downpipe",
+    "charge_pipes":"charge pipes",
+    "intercooler":"intercooler",
+    "intake":     "intake",
+    "catback":    "cat-back exhaust",
+    "bov_delete": "BOV delete",
+    "oil_cooler": "oil cooler",
+    "dyno_type":  "dyno type",
+}
+
+REASONING = {
     "downpipe":        "Catless downpipe cuts exhaust backpressure; required for Stage 2 tune.",
     "charge_pipes":    "Upgraded charge pipes eliminate boost leaks under higher boost.",
     "intercooler":     "FMIC drops charge temps, reducing knock risk and enabling more aggressive timing.",
@@ -63,6 +85,35 @@ def _encode(config: dict) -> np.ndarray:
 def predict(config: dict) -> tuple[float, float]:
     x = _encode(config)
     return round(float(_whp_model.predict(x)[0]), 1), round(float(_wtq_model.predict(x)[0]), 1)
+
+
+def _explain_gain(base_config: dict, mod_config: dict, mod_feature: str) -> str:
+    """
+    Compute SHAP delta between mod_config and base_config, identify top drivers,
+    and return a short deterministic explanation string.
+    """
+    sv_base = _explainer.shap_values(_encode(base_config))[0]
+    sv_mod  = _explainer.shap_values(_encode(mod_config))[0]
+    delta   = sv_mod - sv_base
+
+    # Map feature names to their SHAP contribution to the gain
+    deltas = dict(zip(FEATURE_NAMES, delta))
+
+    # Top drivers by absolute contribution, ignoring tiny noise (< 0.5 whp)
+    drivers = sorted(
+        [(k, abs(v)) for k, v in deltas.items() if abs(v) >= 0.5],
+        key=lambda x: x[1], reverse=True,
+    )
+
+    primary_label   = FEATURE_LABELS.get(mod_feature, mod_feature)
+    secondary_keys  = [k for k, _ in drivers if k != mod_feature][:2]
+    secondary_labels = [FEATURE_LABELS.get(k, k) for k in secondary_keys]
+
+    if not secondary_labels:
+        return f"Gain is driven by the {primary_label} alone."
+    if len(secondary_labels) == 1:
+        return f"Driven by the {primary_label}; {secondary_labels[0]} is a contributing factor."
+    return f"Driven by the {primary_label}; {secondary_labels[0]} and {secondary_labels[1]} also contribute."
 
 
 def estimate_current(tune: str, fuel: str, **kwargs) -> tuple[float, float]:
@@ -100,39 +151,48 @@ def get_recommendations(
     base_whp, base_wtq = predict(base)
     candidates = []
 
-    def _add(mod_label, config_with, cost, reasoning):
+    def _add(mod_label, config_with, cost, reasoning_key, mod_feature):
         whp, wtq = predict(config_with)
         gain_whp = round(whp - base_whp, 1)
         gain_wtq = round(wtq - base_wtq, 1)
         if gain_whp <= 0:
             return
+        explanation = _explain_gain(base, config_with, mod_feature)
         candidates.append({
             "mod": mod_label,
             "predicted_whp_gain": gain_whp,
             "predicted_wtq_gain": gain_wtq,
             "cost_usd": cost,
             "hp_per_dollar": round(gain_whp / cost, 4) if cost > 0 else 999.0,
-            "reasoning": reasoning,
+            "reasoning": REASONING.get(reasoning_key, ""),
+            "explanation": explanation,
         })
 
     for mod in BINARY_MODS:
         if mod in installed_mods:
             continue
-        _add(mod, {**base, mod: 1}, _prices.get(mod, {}).get("cost_usd", 0), EXPLANATIONS.get(mod, ""))
+        _add(mod, {**base, mod: 1},
+             _prices.get(mod, {}).get("cost_usd", 0), mod, mod)
 
     next_tune = _next(TUNE_ORDER, tune)
     if next_tune:
         _add(f"tune → {next_tune}", {**base, "tune": next_tune},
-             _prices.get(f"tune_{next_tune}", {}).get("cost_usd", 150), EXPLANATIONS["tune_upgrade"])
+             _prices.get(f"tune_{next_tune}", {}).get("cost_usd", 150),
+             "tune_upgrade", "tune")
 
     next_fuel = _next(FUEL_ORDER, fuel)
     if next_fuel:
-        _add(f"fuel → {next_fuel}", {**base, "fuel": next_fuel}, 0, EXPLANATIONS["fuel_upgrade"])
+        _add(f"fuel → {next_fuel}", {**base, "fuel": next_fuel},
+             0, "fuel_upgrade", "fuel")
 
     next_fueling = _next(FUELING_ORDER, fueling_hw)
     if next_fueling:
         _add(f"fueling → {next_fueling}", {**base, "fueling_hw": next_fueling},
-             _prices.get(f"fueling_{next_fueling}", {}).get("cost_usd", 300), EXPLANATIONS["fueling_upgrade"])
+             _prices.get(f"fueling_{next_fueling}", {}).get("cost_usd", 300),
+             "fueling_upgrade", "fueling_hw")
 
-    candidates.sort(key=lambda x: x["hp_per_dollar" if goal == "value" else "predicted_whp_gain"], reverse=True)
+    candidates.sort(
+        key=lambda x: x["hp_per_dollar" if goal == "value" else "predicted_whp_gain"],
+        reverse=True,
+    )
     return candidates

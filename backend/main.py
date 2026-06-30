@@ -16,7 +16,7 @@ _BINARY_MODS = [
     "intake", "catback", "bov_delete", "oil_cooler",
 ]
 
-app = FastAPI(title="N54 Mod Advisor API", version="0.3.0")
+app = FastAPI(title="N54 Mod Advisor API", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +52,7 @@ class ModRecommendation(BaseModel):
     cost_usd: int
     hp_per_dollar: float
     reasoning: str
+    explanation: str = ""
 
 
 class RecommendResponse(BaseModel):
