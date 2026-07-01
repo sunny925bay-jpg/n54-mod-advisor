@@ -74,11 +74,29 @@ class ModRecommendation(BaseModel):
     risk_score: float = 0.0
 
 
+class BuildStep(BaseModel):
+    mod: str
+    cumulative_whp: float
+    cumulative_wtq: float
+    cost_usd: int
+
+
+class BuildPlan(BaseModel):
+    steps: List[BuildStep]
+    final_whp: float
+    final_wtq: float
+    total_cost_usd: int
+    risk_flags: List[RiskFlag]
+    reachable: bool
+    message: str
+
+
 class RecommendResponse(BaseModel):
     current_whp: float
     current_wtq: float
     model: str
     recommendations: List[ModRecommendation]
+    build_plan: Optional[BuildPlan] = None
 
 
 class PredictResponse(BaseModel):
@@ -130,9 +148,23 @@ def recommend(req: RecommendRequest):
         year=req.year,
         target_hp=req.target_hp,
     )
+    build_plan = None
+    if req.goal == "target_hp" and req.target_hp is not None:
+        plan = recommender.get_build_plan(
+            fuel=req.fuel,
+            fueling_hw=req.fueling_hw,
+            tune=req.tune,
+            installed_mods=set(req.mods),
+            target_whp=req.target_hp,
+            chassis=req.chassis,
+            year=req.year,
+        )
+        build_plan = BuildPlan(**plan)
+
     return RecommendResponse(
         current_whp=current_whp,
         current_wtq=current_wtq,
         model=_MODEL_STATUS,
         recommendations=[ModRecommendation(**r) for r in recs],
+        build_plan=build_plan,
     )

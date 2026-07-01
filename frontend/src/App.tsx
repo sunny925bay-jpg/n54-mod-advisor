@@ -31,11 +31,29 @@ interface Recommendation {
   risk_score: number
 }
 
+interface BuildStep {
+  mod: string
+  cumulative_whp: number
+  cumulative_wtq: number
+  cost_usd: number
+}
+
+interface BuildPlan {
+  steps: BuildStep[]
+  final_whp: number
+  final_wtq: number
+  total_cost_usd: number
+  risk_flags: RiskFlag[]
+  reachable: boolean
+  message: string
+}
+
 interface RecommendResponse {
   current_whp: number
   current_wtq: number
   model: string
   recommendations: Recommendation[]
+  build_plan?: BuildPlan
 }
 
 const CHASSIS_OPTIONS = [
@@ -154,6 +172,65 @@ function RecCard({ rec }: { rec: Recommendation }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BuildPlanCard({ plan, targetHp }: { plan: BuildPlan; targetHp: number }) {
+  return (
+    <div className={`build-plan ${plan.reachable ? 'plan-reachable' : 'plan-unreachable'}`}>
+      <div className="plan-header">
+        <h3>
+          {plan.reachable ? `Cheapest path to ${targetHp} whp` : `Max reachable build`}
+        </h3>
+        <span className={`plan-badge ${plan.reachable ? 'badge-ok' : 'badge-fail'}`}>
+          {plan.reachable ? '✓ Target reached' : '✗ Not reachable'}
+        </span>
+      </div>
+      <p className="plan-message">{plan.message}</p>
+
+      <div className="plan-steps">
+        {plan.steps.map((step, i) => (
+          <div key={i} className="plan-step">
+            <span className="step-num">{i + 1}</span>
+            <span className="step-mod">{step.mod}</span>
+            <span className="step-whp">
+              {step.cumulative_whp} whp / {step.cumulative_wtq} wtq
+            </span>
+            <span className="step-cost">
+              {step.cost_usd === 0 ? 'free' : `$${step.cost_usd}`}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="plan-summary">
+        <div className="plan-summary-row">
+          <span className="plan-label">Final</span>
+          <span className="plan-value">
+            {plan.final_whp} whp / {plan.final_wtq} wtq
+          </span>
+        </div>
+        <div className="plan-summary-row">
+          <span className="plan-label">Total cost</span>
+          <span className="plan-value plan-total-cost">
+            ${plan.total_cost_usd.toLocaleString()}
+          </span>
+        </div>
+      </div>
+
+      {plan.risk_flags.length > 0 && (
+        <div className="risk-flags">
+          {plan.risk_flags.map((f) => (
+            <div key={f.id} className={`risk-flag risk-${f.severity}`}>
+              <span className="risk-icon">
+                {f.severity === 'warning' ? '⚠' : f.severity === 'caution' ? '◆' : 'ℹ'}
+              </span>
+              {f.message}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -327,10 +404,18 @@ function App() {
               </span>
               <span className="model-badge">{result.model}</span>
             </div>
+            {result.build_plan && (
+              <BuildPlanCard plan={result.build_plan} targetHp={targetHp} />
+            )}
             {result.recommendations.length === 0 ? (
               <p className="no-recs">No further upgrades found for this build.</p>
             ) : (
-              result.recommendations.map((rec, i) => <RecCard key={i} rec={rec} />)
+              <>
+                {result.build_plan && (
+                  <p className="recs-subheader">All available upgrades</p>
+                )}
+                {result.recommendations.map((rec, i) => <RecCard key={i} rec={rec} />)}
+              </>
             )}
           </section>
         )}

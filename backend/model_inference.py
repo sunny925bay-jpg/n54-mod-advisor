@@ -226,3 +226,127 @@ def get_recommendations(
     else:  # "max_power" or legacy "power"
         candidates.sort(key=lambda x: x["predicted_whp_gain"], reverse=True)
     return candidates
+
+
+def get_build_plan(
+    fuel: str,
+    fueling_hw: str,
+    tune: str,
+    installed_mods: set,
+    target_whp: int,
+    chassis: str = "e92",
+    year: int = 2010,
+) -> dict:
+    """Greedy cheapest-path search to target_whp using the LightGBM model."""
+    config = {
+        "chassis": chassis, "year": year,
+        "turbo_setup": "stock", "dyno_type": "mustang",
+        "fuel": fuel, "fueling_hw": fueling_hw, "tune": tune,
+        **{m: (1 if m in installed_mods else 0) for m in BINARY_MODS},
+    }
+    current_whp, current_wtq = predict(config)
+
+    remaining_binary = [m for m in BINARY_MODS if m not in installed_mods]
+    current_tune = tune
+    current_fuel = fuel
+    current_fueling = fueling_hw
+
+    steps: list[dict] = []
+    total_cost = 0
+    max_steps = len(BINARY_MODS) + len(TUNE_ORDER) + len(FUEL_ORDER) + len(FUELING_ORDER)
+
+    for _ in range(max_steps):
+        if current_whp >= target_whp:
+            break
+
+        candidates: list[dict] = []
+
+        for mod in remaining_binary:
+            test = {**config, mod: 1}
+            whp, wtq = predict(test)
+            gain = whp - current_whp
+            if gain > 0:
+                cost = _prices.get(mod, {}).get("cost_usd", 0)
+                candidates.append({
+                    "kind": "binary", "label": mod, "next_val": None,
+                    "config": test, "whp": round(whp, 1), "wtq": round(wtq, 1),
+                    "cost": cost, "hpd": gain / cost if cost > 0 else float("inf"),
+                })
+
+        next_tune = _next(TUNE_ORDER, current_tune)
+        if next_tune:
+            test = {**config, "tune": next_tune}
+            whp, wtq = predict(test)
+            gain = whp - current_whp
+            if gain > 0:
+                cost = _prices.get(f"tune_{next_tune}", {}).get("cost_usd", 150)
+                candidates.append({
+                    "kind": "tune", "label": f"tune → {next_tune}", "next_val": next_tune,
+                    "config": test, "whp": round(whp, 1), "wtq": round(wtq, 1),
+                    "cost": cost, "hpd": gain / cost if cost > 0 else float("inf"),
+                })
+
+        next_fuel = _next(FUEL_ORDER, current_fuel)
+        if next_fuel:
+            test = {**config, "fuel": next_fuel}
+            whp, wtq = predict(test)
+            gain = whp - current_whp
+            if gain > 0:
+                candidates.append({
+                    "kind": "fuel", "label": f"fuel → {next_fuel}", "next_val": next_fuel,
+                    "config": test, "whp": round(whp, 1), "wtq": round(wtq, 1),
+                    "cost": 0, "hpd": float("inf"),
+                })
+
+        next_fueling = _next(FUELING_ORDER, current_fueling)
+        if next_fueling:
+            test = {**config, "fueling_hw": next_fueling}
+            whp, wtq = predict(test)
+            gain = whp - current_whp
+            if gain > 0:
+                cost = _prices.get(f"fueling_{next_fueling}", {}).get("cost_usd", 300)
+                candidates.append({
+                    "kind": "fueling", "label": f"fueling → {next_fueling}", "next_val": next_fueling,
+                    "config": test, "whp": round(whp, 1), "wtq": round(wtq, 1),
+                    "cost": cost, "hpd": gain / cost if cost > 0 else float("inf"),
+                })
+
+        if not candidates:
+            break
+
+        best = max(candidates, key=lambda c: c["hpd"])
+        config = best["config"]
+        current_whp = best["whp"]
+        current_wtq = best["wtq"]
+        total_cost += best["cost"]
+        steps.append({
+            "mod": best["label"],
+            "cumulative_whp": current_whp,
+            "cumulative_wtq": current_wtq,
+            "cost_usd": best["cost"],
+        })
+
+        if best["kind"] == "binary":
+            remaining_binary.remove(best["label"])
+        elif best["kind"] == "tune":
+            current_tune = best["next_val"]
+        elif best["kind"] == "fuel":
+            current_fuel = best["next_val"]
+        elif best["kind"] == "fueling":
+            current_fueling = best["next_val"]
+
+    reachable = current_whp >= target_whp
+    final_flags = evaluate_rules(config, current_whp)
+    return {
+        "steps": steps,
+        "final_whp": current_whp,
+        "final_wtq": current_wtq,
+        "total_cost_usd": total_cost,
+        "risk_flags": final_flags,
+        "reachable": reachable,
+        "message": (
+            f"Target reached in {len(steps)} step(s)."
+            if reachable
+            else f"Not reachable with stock turbos. Max predicted: {current_whp} whp."
+        ),
+    }
