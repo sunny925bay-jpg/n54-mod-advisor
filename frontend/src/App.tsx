@@ -127,20 +127,71 @@ const GOALS = [
   { value: 'target_hp', label: 'Target HP' },
 ]
 
-function RecCard({ rec }: { rec: Recommendation }) {
+const MOD_NAMES: Record<string, string> = {
+  downpipe: 'Downpipe',
+  charge_pipes: 'Charge Pipes',
+  intercooler: 'Intercooler',
+  intake: 'Intake',
+  catback: 'Cat-back Exhaust',
+  bov_delete: 'BOV Delete',
+  oil_cooler: 'Oil Cooler',
+  jb4_s1: 'JB4 Stage 1',
+  jb4_s2: 'JB4 Stage 2',
+  mhd_s1: 'MHD Stage 1',
+  mhd_s2: 'MHD Stage 2',
+  mhd_s2plus: 'MHD Stage 2+',
+  mhd_custom: 'MHD Custom',
+  cobb: 'COBB',
+  custom: 'Custom Tune',
+  upg_hpfp: 'Upgraded HPFP',
+  port_inj: 'Port Injection',
+  meth: 'Meth Injection',
+  port_inj_meth: 'Port Inj + Meth',
+}
+
+function humanizeMod(mod: string): string {
+  if (mod.startsWith('tune → ')) {
+    const key = mod.replace('tune → ', '')
+    return `${MOD_NAMES[key] ?? key} Tune`
+  }
+  if (mod.startsWith('fuel → ')) {
+    const fuel = mod.replace('fuel → ', '').toUpperCase()
+    return `Switch to ${fuel}`
+  }
+  if (mod.startsWith('fueling → ')) {
+    const key = mod.replace('fueling → ', '')
+    return MOD_NAMES[key] ?? key
+  }
+  return MOD_NAMES[mod] ?? mod
+}
+
+function worstSeverity(flags: RiskFlag[]): 'warning' | 'caution' | 'info' | null {
+  if (flags.some(f => f.severity === 'warning')) return 'warning'
+  if (flags.some(f => f.severity === 'caution')) return 'caution'
+  if (flags.some(f => f.severity === 'info')) return 'info'
+  return null
+}
+
+function RecCard({ rec, rank }: { rec: Recommendation; rank: number }) {
   const [open, setOpen] = useState(false)
+  const severity = worstSeverity(rec.risk_flags)
 
   return (
-    <div className="rec-card">
+    <div className={`rec-card${severity ? ` rec-risk-${severity}` : ''}`}>
       <div className="rec-header" onClick={() => setOpen(!open)}>
+        <div className="rec-rank">{rank}</div>
         <div className="rec-title">
-          <span className="rec-mod">{rec.mod}</span>
-          <span className="rec-gains">
-            +{rec.predicted_whp_gain} whp / +{rec.predicted_wtq_gain} wtq
-          </span>
+          <span className="rec-mod">{humanizeMod(rec.mod)}</span>
+          <div className="rec-gain-row">
+            <span className="rec-gain-num">+{rec.predicted_whp_gain}</span>
+            <span className="rec-gain-unit">whp</span>
+            <span className="rec-gain-sep">/</span>
+            <span className="rec-gain-num rec-gain-tq">+{rec.predicted_wtq_gain}</span>
+            <span className="rec-gain-unit">wtq</span>
+          </div>
         </div>
         <div className="rec-meta">
-          {rec.cost_usd > 0 && <span className="rec-cost">${rec.cost_usd}</span>}
+          {rec.cost_usd > 0 && <span className="rec-cost">${rec.cost_usd.toLocaleString()}</span>}
           {rec.cost_usd > 0 && (
             <span className="rec-ratio">{rec.hp_per_dollar.toFixed(3)} hp/$</span>
           )}
@@ -205,36 +256,49 @@ function DynoGraph({ data, peakWhp, peakWtq }: { data: GraphPoint[]; peakWhp: nu
           <h3>Projected Dyno</h3>
           <span className="dyno-projection-label">PROJECTION — templated curve, model-predicted peaks</span>
         </div>
-        <div className="dyno-peaks">
-          <span className="dyno-peak whp-peak">{peakWhp} whp</span>
-          <span className="dyno-peak wtq-peak">{peakWtq} wtq</span>
+        <div className="dyno-peaks-row">
+          <div className="dyno-stat">
+            <span className="dyno-stat-num dyno-whp-num">{peakWhp}</span>
+            <span className="dyno-stat-label">WHP</span>
+          </div>
+          <div className="dyno-stat-div" />
+          <div className="dyno-stat">
+            <span className="dyno-stat-num dyno-wtq-num">{peakWtq}</span>
+            <span className="dyno-stat-label">WTQ</span>
+          </div>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#1E2538" />
           <XAxis
             dataKey="rpm"
             type="number"
             domain={[2000, 7000]}
             tickCount={6}
             tickFormatter={(v) => `${v / 1000}k`}
-            stroke="#444"
-            tick={{ fill: '#666', fontSize: 11 }}
+            stroke="#28334A"
+            tick={{ fill: '#4B5675', fontSize: 11 }}
           />
           <YAxis
             domain={[yMin, yMax]}
-            stroke="#444"
-            tick={{ fill: '#666', fontSize: 11 }}
+            stroke="#28334A"
+            tick={{ fill: '#4B5675', fontSize: 11 }}
             width={42}
           />
           <Tooltip
-            contentStyle={{ background: '#1a1a1a', border: '1px solid #333', color: '#e8e8e8', fontSize: '0.8rem' }}
+            contentStyle={{
+              background: '#0C0F18',
+              border: '1px solid #1E2538',
+              color: '#F1F5F9',
+              fontSize: '0.8rem',
+              borderRadius: '6px',
+            }}
             labelFormatter={(rpm) => `${rpm} rpm`}
           />
-          <Legend wrapperStyle={{ fontSize: '0.8rem', color: '#888' }} />
-          <Line type="monotone" dataKey="whp" stroke="#3b82f6" dot={false} strokeWidth={2} name="WHP" />
-          <Line type="monotone" dataKey="wtq" stroke="#f97316" dot={false} strokeWidth={2} name="WTQ" />
+          <Legend wrapperStyle={{ fontSize: '0.8rem', color: '#94A3B8' }} />
+          <Line type="monotone" dataKey="whp" stroke="#3B82F6" dot={false} strokeWidth={2} name="WHP" />
+          <Line type="monotone" dataKey="wtq" stroke="#F97316" dot={false} strokeWidth={2} name="WTQ" />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -258,7 +322,7 @@ function BuildPlanCard({ plan, targetHp }: { plan: BuildPlan; targetHp: number }
         {plan.steps.map((step, i) => (
           <div key={i} className="plan-step">
             <span className="step-num">{i + 1}</span>
-            <span className="step-mod">{step.mod}</span>
+            <span className="step-mod">{humanizeMod(step.mod)}</span>
             <span className="step-whp">
               {step.cumulative_whp} whp / {step.cumulative_wtq} wtq
             </span>
@@ -285,7 +349,7 @@ function BuildPlanCard({ plan, targetHp }: { plan: BuildPlan; targetHp: number }
       </div>
 
       {plan.risk_flags.length > 0 && (
-        <div className="risk-flags">
+        <div className="risk-flags" style={{ padding: '0 1rem 1rem' }}>
           {plan.risk_flags.map((f) => (
             <div key={f.id} className={`risk-flag risk-${f.severity}`}>
               <span className="risk-icon">
@@ -376,15 +440,23 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>N54 Mod Advisor</h1>
-        <p>Enter your build to get ranked mod recommendations with predicted whp/tq gain.</p>
-      </header>
+    <div className="app-shell">
+      <nav className="top-nav">
+        <div className="nav-inner">
+          <span className="nav-wordmark">
+            <span className="nav-n54">N54</span>
+            <span className="nav-slash"> / </span>
+            <span className="nav-rest">MOD ADVISOR</span>
+          </span>
+          <span className="nav-tag">BMW N54 · 2007–2013</span>
+        </div>
+      </nav>
 
-      <main>
-        <section className="form-section">
-          <div className="form-row">
+      <main className="main-content">
+        <section className="config-card">
+          <h2 className="section-heading">Your Build</h2>
+
+          <div className="config-grid">
             <div className="field">
               <label>Chassis</label>
               <select value={chassis} onChange={(e) => setChassis(e.target.value)}>
@@ -403,9 +475,6 @@ function App() {
                 onChange={(e) => setYear(Number(e.target.value))}
               />
             </div>
-          </div>
-
-          <div className="form-row">
             <div className="field">
               <label>Fuel</label>
               <select value={fuel} onChange={(e) => setFuel(e.target.value)}>
@@ -435,28 +504,29 @@ function App() {
 
           <div className="field">
             <label>Installed Mods</label>
-            <div className="checkboxes">
+            <div className="mod-chips">
               {BINARY_MODS.map((m) => (
-                <label key={m.id} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={mods.has(m.id)}
-                    onChange={() => toggleMod(m.id)}
-                  />
+                <button
+                  key={m.id}
+                  className={`mod-chip${mods.has(m.id) ? ' active' : ''}`}
+                  onClick={() => toggleMod(m.id)}
+                  type="button"
+                >
                   {m.label}
-                </label>
+                </button>
               ))}
             </div>
           </div>
 
           <div className="field">
             <label>Goal</label>
-            <div className="goal-buttons">
+            <div className="goal-pills">
               {GOALS.map((g) => (
                 <button
                   key={g.value}
-                  className={`goal-btn${goal === g.value ? ' active' : ''}`}
+                  className={`goal-pill${goal === g.value ? ' active' : ''}`}
                   onClick={() => setGoal(g.value)}
+                  type="button"
                 >
                   {g.label}
                 </button>
@@ -465,7 +535,7 @@ function App() {
           </div>
 
           {goal === 'target_hp' && (
-            <div className="field">
+            <div className="field field-narrow">
               <label>Target WHP</label>
               <input
                 type="number"
@@ -477,19 +547,19 @@ function App() {
             </div>
           )}
 
-          <div className="action-buttons">
-            <button className="submit-btn" onClick={submit} disabled={loading}>
-              {loading ? 'Calculating...' : 'Get Recommendations'}
+          <div className="action-row">
+            <button className="btn-primary" onClick={submit} disabled={loading}>
+              {loading ? 'Calculating…' : 'Get Recommendations'}
             </button>
-            <button className="graph-btn" onClick={generateGraph} disabled={graphLoading}>
-              {graphLoading ? 'Generating...' : 'Dyno Graph'}
+            <button className="btn-secondary" onClick={generateGraph} disabled={graphLoading}>
+              {graphLoading ? 'Generating…' : 'Dyno Graph'}
             </button>
           </div>
         </section>
 
-        {error && <div className="error">{error}</div>}
+        {error && <div className="error-banner">{error}</div>}
+        {graphError && <div className="error-banner">{graphError}</div>}
 
-        {graphError && <div className="error">{graphError}</div>}
         {graphData && (
           <DynoGraph
             data={graphData.points}
@@ -501,15 +571,25 @@ function App() {
         {result && (
           <section className="results-section">
             <div className="current-power">
-              <span>
-                Current: <strong>{result.current_whp} whp</strong> /{' '}
-                <strong>{result.current_wtq} wtq</strong>
-              </span>
+              <div className="current-power-stats">
+                <div className="current-stat">
+                  <span className="current-stat-num">{result.current_whp}</span>
+                  <span className="current-stat-label">WHP</span>
+                </div>
+                <span className="current-stat-sep">/</span>
+                <div className="current-stat">
+                  <span className="current-stat-num current-wtq">{result.current_wtq}</span>
+                  <span className="current-stat-label">WTQ</span>
+                </div>
+                <span className="current-label">Current estimated output</span>
+              </div>
               <span className="model-badge">{result.model}</span>
             </div>
+
             {result.build_plan && (
               <BuildPlanCard plan={result.build_plan} targetHp={targetHp} />
             )}
+
             {result.recommendations.length === 0 ? (
               <p className="no-recs">No further upgrades found for this build.</p>
             ) : (
@@ -517,7 +597,9 @@ function App() {
                 {result.build_plan && (
                   <p className="recs-subheader">All available upgrades</p>
                 )}
-                {result.recommendations.map((rec, i) => <RecCard key={i} rec={rec} />)}
+                {result.recommendations.map((rec, i) => (
+                  <RecCard key={i} rec={rec} rank={i + 1} />
+                ))}
               </>
             )}
           </section>
