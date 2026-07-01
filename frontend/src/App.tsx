@@ -1,7 +1,23 @@
 import { useState } from 'react'
 import './App.css'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
+interface GraphPoint {
+  rpm: number
+  whp: number
+  wtq: number
+}
+
+interface GraphResponse {
+  peak_whp: number
+  peak_wtq: number
+  points: GraphPoint[]
+}
 
 interface RiskFlag {
   id: string
@@ -178,6 +194,53 @@ function RecCard({ rec }: { rec: Recommendation }) {
   )
 }
 
+function DynoGraph({ data, peakWhp, peakWtq }: { data: GraphPoint[]; peakWhp: number; peakWtq: number }) {
+  const yMin = Math.floor(Math.min(...data.map(d => Math.min(d.whp, d.wtq))) / 50) * 50
+  const yMax = Math.ceil(Math.max(...data.map(d => Math.max(d.whp, d.wtq))) / 50) * 50
+
+  return (
+    <div className="dyno-graph">
+      <div className="dyno-header">
+        <div className="dyno-title">
+          <h3>Projected Dyno</h3>
+          <span className="dyno-projection-label">PROJECTION — templated curve, model-predicted peaks</span>
+        </div>
+        <div className="dyno-peaks">
+          <span className="dyno-peak whp-peak">{peakWhp} whp</span>
+          <span className="dyno-peak wtq-peak">{peakWtq} wtq</span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+          <XAxis
+            dataKey="rpm"
+            type="number"
+            domain={[2000, 7000]}
+            tickCount={6}
+            tickFormatter={(v) => `${v / 1000}k`}
+            stroke="#444"
+            tick={{ fill: '#666', fontSize: 11 }}
+          />
+          <YAxis
+            domain={[yMin, yMax]}
+            stroke="#444"
+            tick={{ fill: '#666', fontSize: 11 }}
+            width={42}
+          />
+          <Tooltip
+            contentStyle={{ background: '#1a1a1a', border: '1px solid #333', color: '#e8e8e8', fontSize: '0.8rem' }}
+            labelFormatter={(rpm) => `${rpm} rpm`}
+          />
+          <Legend wrapperStyle={{ fontSize: '0.8rem', color: '#888' }} />
+          <Line type="monotone" dataKey="whp" stroke="#3b82f6" dot={false} strokeWidth={2} name="WHP" />
+          <Line type="monotone" dataKey="wtq" stroke="#f97316" dot={false} strokeWidth={2} name="WTQ" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 function BuildPlanCard({ plan, targetHp }: { plan: BuildPlan; targetHp: number }) {
   return (
     <div className={`build-plan ${plan.reachable ? 'plan-reachable' : 'plan-unreachable'}`}>
@@ -249,6 +312,9 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<RecommendResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [graphData, setGraphData] = useState<GraphResponse | null>(null)
+  const [graphLoading, setGraphLoading] = useState(false)
+  const [graphError, setGraphError] = useState<string | null>(null)
 
   function toggleMod(mod: string) {
     setMods((prev) => {
@@ -257,6 +323,29 @@ function App() {
       else next.add(mod)
       return next
     })
+  }
+
+  async function generateGraph() {
+    setGraphLoading(true)
+    setGraphError(null)
+    try {
+      const res = await fetch(`${API}/graph`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chassis, year, fuel,
+          fueling_hw: fuelingHw,
+          tune,
+          mods: [...mods],
+        }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setGraphData(await res.json())
+    } catch (e) {
+      setGraphError(e instanceof Error ? e.message : 'Request failed')
+    } finally {
+      setGraphLoading(false)
+    }
   }
 
   async function submit() {
@@ -388,12 +477,26 @@ function App() {
             </div>
           )}
 
-          <button className="submit-btn" onClick={submit} disabled={loading}>
-            {loading ? 'Calculating...' : 'Get Recommendations'}
-          </button>
+          <div className="action-buttons">
+            <button className="submit-btn" onClick={submit} disabled={loading}>
+              {loading ? 'Calculating...' : 'Get Recommendations'}
+            </button>
+            <button className="graph-btn" onClick={generateGraph} disabled={graphLoading}>
+              {graphLoading ? 'Generating...' : 'Dyno Graph'}
+            </button>
+          </div>
         </section>
 
         {error && <div className="error">{error}</div>}
+
+        {graphError && <div className="error">{graphError}</div>}
+        {graphData && (
+          <DynoGraph
+            data={graphData.points}
+            peakWhp={graphData.peak_whp}
+            peakWtq={graphData.peak_wtq}
+          />
+        )}
 
         {result && (
           <section className="results-section">

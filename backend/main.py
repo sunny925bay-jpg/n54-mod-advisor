@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from dyno_curve import generate_curve
 
 # Use trained model if artifacts exist; fall back to avg-gain baseline otherwise.
 try:
@@ -105,6 +106,18 @@ class PredictResponse(BaseModel):
     model: str
 
 
+class GraphPoint(BaseModel):
+    rpm: int
+    whp: float
+    wtq: float
+
+
+class GraphResponse(BaseModel):
+    peak_whp: float
+    peak_wtq: float
+    points: List[GraphPoint]
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "model": _MODEL_STATUS}
@@ -167,4 +180,22 @@ def recommend(req: RecommendRequest):
         model=_MODEL_STATUS,
         recommendations=[ModRecommendation(**r) for r in recs],
         build_plan=build_plan,
+    )
+
+
+@app.post("/graph", response_model=GraphResponse)
+def dyno_graph(req: PredictRequest):
+    """Return a projected dyno curve (templated shape, model-predicted peaks)."""
+    config = {
+        "chassis": req.chassis, "year": req.year,
+        "turbo_setup": "stock", "fuel": req.fuel,
+        "fueling_hw": req.fueling_hw, "tune": req.tune,
+        "dyno_type": "mustang",
+        **{m: (1 if m in req.mods else 0) for m in _BINARY_MODS},
+    }
+    peak_whp, peak_wtq = recommender.predict(config)
+    return GraphResponse(
+        peak_whp=round(peak_whp, 1),
+        peak_wtq=round(peak_wtq, 1),
+        points=generate_curve(peak_whp, peak_wtq),
     )
