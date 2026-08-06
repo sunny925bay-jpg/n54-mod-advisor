@@ -29,9 +29,11 @@ export default function Landing() {
       {/* ── Hero ── */}
       <section className="hero">
         <div className="hero-headline">
+          <p className="hero-eyebrow">BMW N54 · ML-Powered Build Intelligence</p>
           <h1 className="hero-title">
             Every mod ranked.<br />Every dollar justified.
           </h1>
+          <p className="hero-title-accent">Precision gain predictions. Zero guesswork.</p>
           <p className="hero-sub">
             ML-powered mod advice for the BMW N54 — precise gain predictions,
             build cost analysis, and risk flags before you buy anything.
@@ -62,35 +64,35 @@ export default function Landing() {
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={SAMPLE_DYNO} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1E2538" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
                 <XAxis
                   dataKey="rpm"
                   type="number"
                   domain={[2000, 7000]}
                   tickCount={6}
                   tickFormatter={(v) => `${v / 1000}k`}
-                  stroke="#28334A"
-                  tick={{ fill: '#4B5675', fontSize: 10 }}
+                  stroke="#333"
+                  tick={{ fill: '#666', fontSize: 10 }}
                 />
                 <YAxis
                   domain={[0, 500]}
-                  stroke="#28334A"
-                  tick={{ fill: '#4B5675', fontSize: 10 }}
+                  stroke="#333"
+                  tick={{ fill: '#666', fontSize: 10 }}
                   width={36}
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#0C0F18',
-                    border: '1px solid #1E2538',
-                    color: '#F1F5F9',
+                    background: '#0d0d0d',
+                    border: '1px solid #222',
+                    color: '#f0f0f0',
                     fontSize: '0.75rem',
-                    borderRadius: '6px',
+                    borderRadius: '0',
                   }}
                   labelFormatter={(rpm) => `${rpm} rpm`}
                 />
-                <Legend wrapperStyle={{ fontSize: '0.75rem', color: '#94A3B8' }} />
-                <Line type="monotone" dataKey="whp" stroke="#3B82F6" dot={false} strokeWidth={2} name="WHP" />
-                <Line type="monotone" dataKey="wtq" stroke="#F97316" dot={false} strokeWidth={2} name="WTQ" />
+                <Legend wrapperStyle={{ fontSize: '0.75rem', color: '#888' }} />
+                <Line type="monotone" dataKey="whp" stroke="#1766D6" dot={false} strokeWidth={2} name="WHP" />
+                <Line type="monotone" dataKey="wtq" stroke="#CC0000" dot={false} strokeWidth={2} name="WTQ" />
               </LineChart>
             </ResponsiveContainer>
           </div>

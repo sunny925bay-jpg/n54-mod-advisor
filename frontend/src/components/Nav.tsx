@@ -48,6 +48,7 @@ export default function Nav() {
             <span className={`hamburger-line${drawerOpen ? ' open' : ''}`} />
           </button>
         </div>
+        <div className="m-stripe" />
       </nav>
 
       {drawerOpen && (
